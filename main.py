@@ -3,12 +3,12 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse
 from typing import List
-
+from model import get_model,get_img_proccessed,get_base64_img_from_mask
 app = FastAPI()
 
 
-file = None;
-
+file = None
+ResNet_model2=get_model()
 @app.get("/")
 async def main():
     content = """
@@ -24,21 +24,29 @@ async def main():
 @app.post("/files/")
 async def create_upload_file(file: bytes = File(...)):
     return {"file_size": len(file)}
-
+import re
 @app.post("/uploadfile/")
 def create_upload_file(files: UploadFile):
-    if files and files.content_type == "image/*":
-        sleep(100)
-        process_image(files.file)
-        print("prueba de return" )
-        return {"filename": files.filename}
+    print(files.content_type)
+    regex_all_img = re.compile(r"image/.*")
+    if files and regex_all_img.match(files.content_type):
+        print("prueba de if", type(files))
 
-    raise HTTPException(status_code=404, detail="File is not a tiff image")
+        base64_img=process_image(files.file)
+        print("prueba de return" )
+        return {"filename": base64_img}
+
+    raise HTTPException(status_code=404, detail="File is not a image")
+
 
 def process_image(image: bytes = File(...)):
-    #print(image.read())
-    print("prueba")
-    #return {"image_size": len(image)}
+
+    output=get_img_proccessed(image,ResNet_model2)
+    mask = output[0][1]
+    img_str = get_base64_img_from_mask(mask)
+
+    return img_str
+
 
 @app.post("/execute")
 async def execute():
