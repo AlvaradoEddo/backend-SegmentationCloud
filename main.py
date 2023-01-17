@@ -3,9 +3,18 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse
 from typing import List
+from fastapi.middleware.cors import CORSMiddleware
+
 from model import get_model,get_img_proccessed,get_base64_img_from_mask
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 file = None
 ResNet_model2=get_model()
@@ -33,8 +42,9 @@ def create_upload_file(files: UploadFile):
         print("prueba de if", type(files))
 
         base64_img=process_image(files.file)
-        print("prueba de return" )
-        return {"filename": base64_img}
+        print("prueba de return" ,base64_img)
+        #return as json
+        return {"image": base64_img}
 
     raise HTTPException(status_code=404, detail="File is not a image")
 
@@ -43,6 +53,7 @@ def process_image(image: bytes = File(...)):
 
     output=get_img_proccessed(image,ResNet_model2)
     mask = output[0][1]
+    print("prueba de mask", mask)
     img_str = get_base64_img_from_mask(mask)
 
     return img_str
