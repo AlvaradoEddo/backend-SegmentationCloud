@@ -1,3 +1,4 @@
+from time import sleep
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse
@@ -25,16 +26,17 @@ async def create_upload_file(file: bytes = File(...)):
     return {"file_size": len(file)}
 
 @app.post("/uploadfile/")
-async def create_upload_file(files: UploadFile):
-    if files and files.content_type == "image/tiff":
-        file=files
+def create_upload_file(files: UploadFile):
+    if files and files.content_type == "image/*":
+        sleep(100)
         process_image(files.file)
+        print("prueba de return" )
         return {"filename": files.filename}
 
-    raise HTTPException(status_code=400, detail="File is not a tiff image")
+    raise HTTPException(status_code=404, detail="File is not a tiff image")
 
 def process_image(image: bytes = File(...)):
-    print(image.read())
+    #print(image.read())
     print("prueba")
     #return {"image_size": len(image)}
 
